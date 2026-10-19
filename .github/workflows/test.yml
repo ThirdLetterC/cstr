@@ -6,14 +6,20 @@ on:
       - 'cstr.c'
       - 'cstr.h'
       - 'test_cstr.c'
+      - 'bench_cstr.c'
       - 'Makefile'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
       - '.github/workflows/test.yml'
   pull_request:
     paths:
       - 'cstr.c'
       - 'cstr.h'
       - 'test_cstr.c'
+      - 'bench_cstr.c'
       - 'Makefile'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
       - '.github/workflows/test.yml'
   workflow_dispatch:
 
@@ -55,5 +61,12 @@ jobs:
           CC: ${{ matrix.cc }}
       - name: Address and undefined behavior sanitizers
         run: make test-asan CC="$CC"
+        env:
+          CC: ${{ matrix.cc }}
+      - name: CMake build and tests
+        run: |
+          cmake -S . -B build/ci -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="$CC"
+          cmake --build build/ci --parallel 2
+          ctest --test-dir build/ci --output-on-failure
         env:
           CC: ${{ matrix.cc }}

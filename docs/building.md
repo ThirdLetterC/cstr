@@ -8,6 +8,61 @@ Copy [cstr.h](../cstr.h) and [cstr.c](../cstr.c) into your project. Include `cst
 
 The library supports ISO C11, C17, and C23. The commands below use C11 and GCC. Run them from the project root. They link the system math library with `-lm`, as the Makefile does.
 
+## Build with CMake
+
+CMake 3.21 or newer is supported alongside the Makefile. From the project root:
+
+```sh
+cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
+cmake --build build/release --parallel
+ctest --test-dir build/release --output-on-failure
+```
+
+This builds the `cstr` library, `test_cstr`, and `bench_cstr`. Run the benchmark with:
+
+```sh
+cmake --build build/release --target bench
+```
+
+For sanitizer tests with GCC or Clang:
+
+```sh
+cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DCS_ENABLE_SANITIZERS=ON
+cmake --build build/asan --parallel
+ctest --test-dir build/asan --output-on-failure
+```
+
+Use `-DBUILD_TESTING=OFF` to skip tests, `-DCS_BUILD_BENCHMARKS=OFF` to skip
+benchmarks, or `-DBUILD_SHARED_LIBS=ON` to build a shared library instead of a
+static library. For generators with multiple configurations, add `--config
+Release` to build commands and `-C Release` to CTest commands.
+
+To embed the source in another CMake project:
+
+```cmake
+add_subdirectory(path/to/cstr)
+target_link_libraries(my_app PRIVATE cstr::cstr)
+```
+
+Tests and benchmarks default to off when cstr is included as a subproject.
+The target supplies the header path and required system libraries.
+
+You can also install the library:
+
+```sh
+cmake --install build/release --prefix /path/to/install
+```
+
+Consumers can configure with `-DCMAKE_PREFIX_PATH=/path/to/install`, then use:
+
+```cmake
+find_package(cstr CONFIG REQUIRED)
+target_link_libraries(my_app PRIVATE cstr::cstr)
+```
+
+CMake reads the library version from `cstr.h`, so version updates do not need
+another version field in the build files.
+
 ## Run tests
 
 With Make:
@@ -60,13 +115,15 @@ their inputs. You can also start either workflow manually from the Actions tab.
 
 - `test.yml` runs unit tests and AddressSanitizer/UndefinedBehaviorSanitizer on
   Ubuntu 26.04 with GCC and Clang, and macOS 15 (Apple Silicon) with Clang.
+  It also builds the library, tests, and benchmark with CMake and runs CTest.
 - `benchmark.yml` runs optimized (`-O3`) benchmarks on Ubuntu 26.04 with GCC and
   macOS 15 with Clang. Each job saves a `benchmark.txt` artifact for 30 days,
   including the commit, system, compiler, flags, and results. Available backends
   include NEON on Apple Silicon; unsupported backends are reported as `N/A`.
 
 Both workflows watch `cstr.c`, `cstr.h`, `Makefile`, and their own workflow file.
-Tests also watch `test_cstr.c`; benchmarks also watch `bench_cstr.c`.
+Tests also watch `test_cstr.c`, `bench_cstr.c`, `CMakeLists.txt`, and `cmake/**`;
+benchmarks also watch `bench_cstr.c`.
 Documentation-only changes do not trigger either workflow.
 
 Benchmark results are measurements from shared runners. They are useful for

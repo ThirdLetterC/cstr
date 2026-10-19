@@ -3,6 +3,7 @@
 /test_cstr_asan
 /bench_cstr
 /build/
+/cmake-build-*/
 *.o
 *.obj
 *.a
