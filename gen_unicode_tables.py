@@ -31,57 +31,79 @@ MAX_CP = 0x110000
 # 1. General Category mapping (matches cs_general_category enum in cstr.h)
 GC_MAP = {
     "Cn": 0,
-    "Lu": 1, "Ll": 2, "Lt": 3, "Lm": 4, "Lo": 5,
-    "Mn": 6, "Mc": 7, "Me": 8,
-    "Nd": 9, "Nl": 10, "No": 11,
-    "Pc": 12, "Pd": 13, "Ps": 14, "Pe": 15, "Pi": 16, "Pf": 17, "Po": 18,
-    "Sm": 19, "Sc": 20, "Sk": 21, "So": 22,
-    "Zs": 23, "Zl": 24, "Zp": 25,
-    "Cc": 26, "Cf": 27, "Cs": 28, "Co": 29,
+    "Lu": 1,
+    "Ll": 2,
+    "Lt": 3,
+    "Lm": 4,
+    "Lo": 5,
+    "Mn": 6,
+    "Mc": 7,
+    "Me": 8,
+    "Nd": 9,
+    "Nl": 10,
+    "No": 11,
+    "Pc": 12,
+    "Pd": 13,
+    "Ps": 14,
+    "Pe": 15,
+    "Pi": 16,
+    "Pf": 17,
+    "Po": 18,
+    "Sm": 19,
+    "Sc": 20,
+    "Sk": 21,
+    "So": 22,
+    "Zs": 23,
+    "Zl": 24,
+    "Zp": 25,
+    "Cc": 26,
+    "Cf": 27,
+    "Cs": 28,
+    "Co": 29,
 }
 
 # ICU UCharCategory (0..29) -> cs_general_category (0..29)
 ICU_TO_CSTR_GC = {
-    0: 0,   # Cn
-    1: 1,   # Lu
-    2: 2,   # Ll
-    3: 3,   # Lt
-    4: 4,   # Lm
-    5: 5,   # Lo
-    6: 6,   # Mn
-    7: 8,   # Me -> 8
-    8: 7,   # Mc -> 7
-    9: 9,   # Nd
-    10: 10, # Nl
-    11: 11, # No
-    12: 23, # Zs
-    13: 24, # Zl
-    14: 25, # Zp
-    15: 26, # Cc
-    16: 27, # Cf
-    17: 29, # Co
-    18: 28, # Cs
-    19: 13, # Pd
-    20: 14, # Ps
-    21: 15, # Pe
-    22: 12, # Pc
-    23: 18, # Po
-    24: 19, # Sm
-    25: 20, # Sc
-    26: 21, # Sk
-    27: 22, # So
-    28: 16, # Pi
-    29: 17, # Pf
+    0: 0,  # Cn
+    1: 1,  # Lu
+    2: 2,  # Ll
+    3: 3,  # Lt
+    4: 4,  # Lm
+    5: 5,  # Lo
+    6: 6,  # Mn
+    7: 8,  # Me -> 8
+    8: 7,  # Mc -> 7
+    9: 9,  # Nd
+    10: 10,  # Nl
+    11: 11,  # No
+    12: 23,  # Zs
+    13: 24,  # Zl
+    14: 25,  # Zp
+    15: 26,  # Cc
+    16: 27,  # Cf
+    17: 29,  # Co
+    18: 28,  # Cs
+    19: 13,  # Pd
+    20: 14,  # Ps
+    21: 15,  # Pe
+    22: 12,  # Pc
+    23: 18,  # Po
+    24: 19,  # Sm
+    25: 20,  # Sc
+    26: 21,  # Sk
+    27: 22,  # So
+    28: 16,  # Pi
+    29: 17,  # Pf
 }
 
 # ICU UGraphemeClusterBreak (0..17) -> CS_GCB_* (0..14)
 ICU_TO_CSTR_GCB = {
-    0: 0,   # Other
-    1: 3,   # Control
-    2: 1,   # CR
-    3: 4,   # Extend
-    4: 9,   # L
-    5: 2,   # LF
+    0: 0,  # Other
+    1: 3,  # Control
+    2: 1,  # CR
+    3: 4,  # Extend
+    4: 9,  # L
+    5: 2,  # LF
     6: 12,  # LV
     7: 13,  # LVT
     8: 11,  # T
@@ -99,48 +121,48 @@ CS_GCB_EXTPICT = 14
 
 # ICU UWordBreakValues (0..22) -> CS_WB_* (0..18)
 ICU_TO_CSTR_WB = {
-    0: 0,   # Other
+    0: 0,  # Other
     1: 10,  # ALetter
-    2: 7,   # Format
-    3: 8,   # Katakana
+    2: 7,  # Format
+    3: 8,  # Katakana
     4: 14,  # MidLetter
     5: 15,  # MidNum
     6: 16,  # Numeric
     7: 17,  # ExtendNumLet
-    8: 1,   # CR
-    9: 4,   # Extend
+    8: 1,  # CR
+    9: 4,  # Extend
     10: 2,  # LF
-    11: 13, # MidNumLet
+    11: 13,  # MidNumLet
     12: 3,  # Newline
     13: 6,  # Regional_Indicator
     14: 9,  # Hebrew_Letter
-    15: 11, # Single_Quote
-    16: 12, # Double_Quote
+    15: 11,  # Single_Quote
+    16: 12,  # Double_Quote
     17: 0,  # E_Base (obsolete -> Other)
     18: 0,  # E_Base_GAZ (obsolete -> Other)
     19: 0,  # E_Modifier (obsolete -> Other)
     20: 0,  # Glue_After_Zwj (obsolete -> Other)
     21: 5,  # ZWJ
-    22: 18, # WSegSpace
+    22: 18,  # WSegSpace
 }
 
 # ICU USentenceBreak (0..14) -> CS_SB_* (0..14)
 ICU_TO_CSTR_SB = {
-    0: 0,   # Other
+    0: 0,  # Other
     1: 11,  # ATerm
     2: 13,  # Close
-    3: 5,   # Format
-    4: 7,   # Lower
+    3: 5,  # Format
+    4: 7,  # Lower
     5: 10,  # Numeric
-    6: 9,   # OLetter
-    7: 4,   # Sep
-    8: 6,   # Sp
+    6: 9,  # OLetter
+    7: 4,  # Sep
+    8: 6,  # Sp
     9: 12,  # STerm
     10: 8,  # Upper
     11: 1,  # CR
     12: 3,  # Extend
     13: 2,  # LF
-    14: 14, # SContinue
+    14: 14,  # SContinue
 }
 
 
@@ -150,7 +172,11 @@ def utf16_to_cps(u16_list):
     while i < len(u16_list):
         u = u16_list[i]
         i += 1
-        if 0xD800 <= u <= 0xDBFF and i < len(u16_list) and 0xDC00 <= u16_list[i] <= 0xDFFF:
+        if (
+            0xD800 <= u <= 0xDBFF
+            and i < len(u16_list)
+            and 0xDC00 <= u16_list[i] <= 0xDFFF
+        ):
             cps.append(0x10000 + (((u - 0xD800) << 10) | (u16_list[i] - 0xDC00)))
             i += 1
         else:
@@ -171,12 +197,15 @@ def ucptrie_fast16_get(index_u16, data_u16, high_start, cp):
         idx3 = (cp >> 4) & 0x1F
         block = (i2 & 0x7FFF) + (idx3 * 9) // 8
         sub = idx3 & 7
-        i3 = index_u16[block + 1] | ((index_u16[block - sub] << (2 + 2 * sub)) & 0x30000)
+        i3 = index_u16[block + 1] | (
+            (index_u16[block - sub] << (2 + 2 * sub)) & 0x30000
+        )
     return data_u16[i3 + (cp & 0xF)]
 
 
 class Norm2Decoder78:
     """Decodes ICU 78 (formatVersion 5, Unicode 17.0.0) Normalizer2 tries & extraData."""
+
     def __init__(self, indexes, index_u16, data_u16, extra_u16, high_start):
         self.indexes = indexes
         self.index_u16 = index_u16
@@ -195,7 +224,9 @@ class Norm2Decoder78:
         self.minNoNoEmpty = indexes[17]
         self.minLcccCP = indexes[18]
         self.minMaybeNo = indexes[20] if indexes[0] >= 88 else self.minMaybeYes
-        self.minMaybeNoCombinesFwd = indexes[21] if indexes[0] >= 88 else self.minMaybeYes
+        self.minMaybeNoCombinesFwd = (
+            indexes[21] if indexes[0] >= 88 else self.minMaybeYes
+        )
         self.centerNoNoDelta = (self.minMaybeNo >> 3) - 65
 
     def get_norm16(self, cp):
@@ -247,7 +278,15 @@ class Norm2Decoder78:
         if 0xD800 <= cp <= 0xDFFF:
             return 0, 0
         norm16 = self.get_norm16(cp)
-        decomp_qc = 0 if (cp < self.minDecompNoCP or norm16 < self.minYesNo or norm16 >= self.minMaybeYes) else 1
+        decomp_qc = (
+            0
+            if (
+                cp < self.minDecompNoCP
+                or norm16 < self.minYesNo
+                or norm16 >= self.minMaybeYes
+            )
+            else 1
+        )
         if cp < self.minCompNoMaybeCP or norm16 < self.minNoNo or norm16 > 0xFE00:
             comp_qc = 0
         elif self.minMaybeNo <= norm16 <= 0xFE00:
@@ -263,7 +302,9 @@ def load_nrm_file(buf, off):
     ix = struct.unpack_from("<22i", buf, base)
     trie_off = base + ix[0]
     extra_off = base + ix[1]
-    sig, opts, idx_len, data_len_lo, i3n, dn_lo, sh_hi = struct.unpack_from("<IHHHHHH", buf, trie_off)
+    sig, opts, idx_len, data_len_lo, i3n, dn_lo, sh_hi = struct.unpack_from(
+        "<IHHHHHH", buf, trie_off
+    )
     data_len = ((opts & 0xF000) << 4) | data_len_lo
     t_idx = struct.unpack_from(f"<{idx_len}H", buf, trie_off + 16)
     t_dat = struct.unpack_from(f"<{data_len}H", buf, trie_off + 16 + idx_len * 2)
@@ -277,7 +318,7 @@ def decode_ucase_cp(icu, trie_ptr, exc_arr, cp):
     is_lower = 1 if utype == 1 else 0
     is_upper = 1 if utype == 2 else 0
     is_cased = 1 if utype != 0 else 0
-    is_ci    = 1 if (props & 4) != 0 else 0
+    is_ci = 1 if (props & 4) != 0 else 0
 
     if (props & 8) == 0:
         is_sd = 1 if (props & 0x60) == 0x20 else 0
@@ -388,8 +429,12 @@ def generate(out_path):
     icu.utrie2_get32_72.argtypes = [ctypes.c_void_p, ctypes.c_int32]
     icu.utrie2_get32_72.restype = ctypes.c_uint32
     icu.ucptrie_openFromBinary_72.argtypes = [
-        ctypes.c_int32, ctypes.c_int32, ctypes.c_void_p, ctypes.c_int32,
-        ctypes.POINTER(ctypes.c_int32), ctypes.POINTER(ctypes.c_int32),
+        ctypes.c_int32,
+        ctypes.c_int32,
+        ctypes.c_void_p,
+        ctypes.c_int32,
+        ctypes.POINTER(ctypes.c_int32),
+        ctypes.POINTER(ctypes.c_int32),
     ]
     icu.ucptrie_openFromBinary_72.restype = ctypes.c_void_p
     icu.ucptrie_get_72.argtypes = [ctypes.c_void_p, ctypes.c_int32]
@@ -406,17 +451,29 @@ def generate(out_path):
         d16_p = idx_p + idx_len * 2
         st = ctypes.create_string_buffer(64)
         struct.pack_into(
-            "<QQQiiHHIIii", st, 0,
-            idx_p, d16_p, 0, idx_len, data_len, i2null, dnull, 0, 0, hstart, hv_idx,
+            "<QQQiiHHIIii",
+            st,
+            0,
+            idx_p,
+            d16_p,
+            0,
+            idx_len,
+            data_len,
+            i2null,
+            dnull,
+            0,
+            0,
+            hstart,
+            hv_idx,
         )
         return buf, st
 
     # Extract ICU 78 (Unicode 17.0.0) data blocks
     pt_raw = cr[0x25839E0 : 0x25839E0 + (4628 + 19480) * 2]
     pv_raw = cr[0x258F640 : 0x258F640 + (5924 + 37208) * 2]
-    pvec_raw = cr[0x257CF60 : 0x25839E0]
+    pvec_raw = cr[0x257CF60:0x25839E0]
     uc_raw = cr[0x2576580 : 0x2576580 + (3468 + 10076) * 2]
-    exc_raw = cr[0x2575580 : 0x2576290]
+    exc_raw = cr[0x2575580:0x2576290]
     nfc_raw = cr[0x25581D0 : 0x255D080 + 8162 * 2]
     nfkc_raw = icudtl[7798000 : 7798000 + 56128]
     uemoji_raw = icudtl[9006464 : 9006464 + 14400]
@@ -442,11 +499,15 @@ def generate(out_path):
     e_hsize = struct.unpack_from("<H", uemoji_raw, 0)[0]
     e_ix = struct.unpack_from("<16i", uemoji_raw, e_hsize)
     e_buf = ctypes.create_string_buffer(uemoji_raw[e_hsize + e_ix[0] :])
-    e_trie = icu.ucptrie_openFromBinary_72(-1, -1, e_buf, len(e_buf), ctypes.byref(actual), ctypes.byref(err))
+    e_trie = icu.ucptrie_openFromBinary_72(
+        -1, -1, e_buf, len(e_buf), ctypes.byref(actual), ctypes.byref(err)
+    )
 
     t_idx = cbrk_raw.find(b"3irT")
     cb_buf = ctypes.create_string_buffer(cbrk_raw[t_idx:])
-    cb_trie = icu.ucptrie_openFromBinary_72(-1, -1, cb_buf, len(cbrk_raw) - t_idx, ctypes.byref(actual), ctypes.byref(err))
+    cb_trie = icu.ucptrie_openFromBinary_72(
+        -1, -1, cb_buf, len(cbrk_raw) - t_idx, ctypes.byref(actual), ctypes.byref(err)
+    )
 
     # Build 3-stage property trie, case table, and normalization tables in a single pass
     palette = []
@@ -487,8 +548,8 @@ def generate(out_path):
         pv = icu.utrie2_get32_72(pv_st, cp)
         w1, w2 = struct.unpack_from("<2I", pvec_raw, pv * 4 + 4)
         gcb = ICU_TO_CSTR_GCB[(w2 >> 5) & 0x1F]
-        wb  = ICU_TO_CSTR_WB[(w2 >> 10) & 0x1F]
-        sb  = ICU_TO_CSTR_SB[(w2 >> 15) & 0x1F]
+        wb = ICU_TO_CSTR_WB[(w2 >> 10) & 0x1F]
+        sb = ICU_TO_CSTR_SB[(w2 >> 15) & 0x1F]
 
         cb = icu.ucptrie_get_72(cb_trie, cp)
         # InCB: 0=None, 1=Consonant (char.brk=11), 2=Linker (char.brk=12), 3=Extend (char.brk=8 or 17)
@@ -502,7 +563,9 @@ def generate(out_path):
             u = l = c = ci = sd = 0
             lc = uc = tc = cf = scf = (cp,)
         else:
-            u, l, c, ci, sd, lc, uc, tc, cf, scf = decode_ucase_cp(icu, uc_st, exc78_u16, cp)
+            u, l, c, ci, sd, lc, uc, tc, cf, scf = decode_ucase_cp(
+                icu, uc_st, exc78_u16, cp
+            )
 
         alpha = 1 if (w1 & 0x100) else 0
         wspace = 1 if (w1 & 0x1) else 0
@@ -533,14 +596,16 @@ def generate(out_path):
         # Case mapping row
         if not (0xD800 <= cp <= 0xDFFF):
             if lc != (cp,) or uc != (cp,) or tc != (cp,) or cf != (cp,) or scf != (cp,):
-                case_rows.append((
-                    cp,
-                    encode_case_target(cp, lc),
-                    encode_case_target(cp, uc),
-                    encode_case_target(cp, tc),
-                    encode_case_target(cp, cf),
-                    encode_case_target(cp, scf),
-                ))
+                case_rows.append(
+                    (
+                        cp,
+                        encode_case_target(cp, lc),
+                        encode_case_target(cp, uc),
+                        encode_case_target(cp, tc),
+                        encode_case_target(cp, cf),
+                        encode_case_target(cp, scf),
+                    )
+                )
 
         # Normalization decomposition & canonical composition rows
         if not (0xAC00 <= cp <= 0xD7A3 or 0xD800 <= cp <= 0xDFFF):
@@ -615,29 +680,52 @@ def generate(out_path):
     checksums = [(name, hashlib.sha256(data).hexdigest()) for name, data in ucd_blocks]
 
     with open(out_path, "w", encoding="utf-8") as f:
-        f.write("/* ==========================================================================\n")
-        f.write(" * AUTO-GENERATED UNICODE 17.0.0 TABLES (gen_unicode_tables.py v2.0.0)\n")
+        f.write(
+            "/* ==========================================================================\n"
+        )
+        f.write(
+            " * AUTO-GENERATED UNICODE 17.0.0 TABLES (gen_unicode_tables.py v2.0.0)\n"
+        )
         f.write(" * DO NOT EDIT MANUALLY.\n")
         f.write(" *\n")
         f.write(" * Source UCD SHA-256 Checksums (ICU 78 / Unicode 17.0.0):\n")
-        for name, digest in checksums:
-            f.write(f" *   {name:<26} : {digest}\n")
+        f.writelines(f" *   {name:<26} : {digest}\n" for name, digest in checksums)
         f.write(" *\n")
         f.write(" * UNICODE LICENSE V3 - DATA FILES AND SOFTWARE\n")
         f.write(" * Copyright (c) 1991-2025 Unicode, Inc. All rights reserved.\n")
-        f.write(" * Distributed under the Terms of Use in https://www.unicode.org/copyright.html.\n")
-        f.write(" * Permission is hereby granted, free of charge, to any person obtaining\n")
-        f.write(" * a copy of the Unicode data files and any associated documentation\n")
-        f.write(" * (the \"Data Files\") or Unicode software and any associated documentation\n")
-        f.write(" * (the \"Software\") to deal in the Data Files or Software without\n")
-        f.write(" * restriction, including without limitation the rights to use, copy,\n")
-        f.write(" * modify, merge, publish, distribute, and/or sell copies of the Data\n")
-        f.write(" * Files or Software, and to permit persons to whom the Data Files or\n")
+        f.write(
+            " * Distributed under the Terms of Use in https://www.unicode.org/copyright.html.\n"
+        )
+        f.write(
+            " * Permission is hereby granted, free of charge, to any person obtaining\n"
+        )
+        f.write(
+            " * a copy of the Unicode data files and any associated documentation\n"
+        )
+        f.write(
+            ' * (the "Data Files") or Unicode software and any associated documentation\n'
+        )
+        f.write(' * (the "Software") to deal in the Data Files or Software without\n')
+        f.write(
+            " * restriction, including without limitation the rights to use, copy,\n"
+        )
+        f.write(
+            " * modify, merge, publish, distribute, and/or sell copies of the Data\n"
+        )
+        f.write(
+            " * Files or Software, and to permit persons to whom the Data Files or\n"
+        )
         f.write(" * Software are furnished to do so, provided that either (a) this\n")
-        f.write(" * copyright and permission notice appear with all copies of the Data\n")
-        f.write(" * Files or Software, or (b) this copyright and permission notice appear\n")
+        f.write(
+            " * copyright and permission notice appear with all copies of the Data\n"
+        )
+        f.write(
+            " * Files or Software, or (b) this copyright and permission notice appear\n"
+        )
         f.write(" * in associated Documentation.\n")
-        f.write(" * ========================================================================== */\n\n")
+        f.write(
+            " * ========================================================================== */\n\n"
+        )
 
         f.write("typedef struct {\n")
         f.write("    uint8_t gc;\n")
@@ -651,8 +739,7 @@ def generate(out_path):
         f.write("} cs_uprop_record;\n\n")
 
         f.write(f"static const cs_uprop_record cs_uprop_palette[{len(palette)}] = {{\n")
-        for i, r in enumerate(palette):
-            f.write(f"    {{{r[0]}, {r[1]}, {r[2]}, {r[3]}, 0x{r[4]:02X}U, {r[5]}, 0x{r[6]:02X}U, {r[7]}}}, /* {i} */\n")
+        f.writelines(f"    {{{r[0]}, {r[1]}, {r[2]}, {r[3]}, 0x{r[4]:02X}U, {r[5]}, 0x{r[6]:02X}U, {r[7]}}}, /* {i} */\n" for i, r in enumerate(palette))
         f.write("};\n\n")
 
         f.write(f"static const uint8_t cs_uprop_stage1[{len(stage1)}] = {{\n")
@@ -678,11 +765,12 @@ def generate(out_path):
 
         f.write(f"#define CS_UCASE_COUNT {len(case_rows)}U\n")
         f.write(f"static const cs_ucase_entry cs_ucase_table[{len(case_rows)}] = {{\n")
-        for r in case_rows:
-            f.write(f"    {{0x{r[0]:04X}U, {r[1]}, {r[2]}, {r[3]}, {r[4]}, {r[5]}}},\n")
+        f.writelines(f"    {{0x{r[0]:04X}U, {r[1]}, {r[2]}, {r[3]}, {r[4]}, {r[5]}}},\n" for r in case_rows)
         f.write("};\n\n")
 
-        f.write(f"static const uint32_t cs_ucase_multi_pool[{len(case_multi_pool)}] = {{\n")
+        f.write(
+            f"static const uint32_t cs_ucase_multi_pool[{len(case_multi_pool)}] = {{\n"
+        )
         f.write(format_int_array(case_multi_pool, 12, hex_fmt=True))
         f.write("\n};\n\n")
 
@@ -692,7 +780,9 @@ def generate(out_path):
         f.write("} cs_udecomp_entry;\n\n")
 
         f.write(f"#define CS_UDECOMP_COUNT {len(decomp_rows)}U\n")
-        f.write(f"static const cs_udecomp_entry cs_udecomp_table[{len(decomp_rows)}] = {{\n")
+        f.write(
+            f"static const cs_udecomp_entry cs_udecomp_table[{len(decomp_rows)}] = {{\n"
+        )
         for cp, info in decomp_rows:
             f.write(f"    {{0x{cp:04X}U, 0x{info:08X}U}},\n")
         f.write("};\n\n")
@@ -721,11 +811,19 @@ def generate(out_path):
     b_comp = len(comp_pairs) * 16
     total_b = b_palette + b_s1 + b_s2 + b_s3 + b_case + b_decomp + b_comp
     print(f"Generated {out_path} (Unicode 17.0.0) successfully.")
-    print(f"  Property trie + palette : {(b_palette + b_s1 + b_s2 + b_s3)/1024:.1f} KiB ({len(palette)} palette entries)")
-    print(f"  Case mappings + pool    : {b_case/1024:.1f} KiB ({len(case_rows)} entries)")
-    print(f"  Decompositions + pool   : {b_decomp/1024:.1f} KiB ({len(decomp_rows)} entries)")
-    print(f"  Canonical compositions  : {b_comp/1024:.1f} KiB ({len(comp_pairs)} entries)")
-    print(f"  Total binary .rodata    : {total_b/1024:.1f} KiB ({total_b} bytes)")
+    print(
+        f"  Property trie + palette : {(b_palette + b_s1 + b_s2 + b_s3) / 1024:.1f} KiB ({len(palette)} palette entries)"
+    )
+    print(
+        f"  Case mappings + pool    : {b_case / 1024:.1f} KiB ({len(case_rows)} entries)"
+    )
+    print(
+        f"  Decompositions + pool   : {b_decomp / 1024:.1f} KiB ({len(decomp_rows)} entries)"
+    )
+    print(
+        f"  Canonical compositions  : {b_comp / 1024:.1f} KiB ({len(comp_pairs)} entries)"
+    )
+    print(f"  Total binary .rodata    : {total_b / 1024:.1f} KiB ({total_b} bytes)")
 
 
 if __name__ == "__main__":
