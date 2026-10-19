@@ -3,7 +3,7 @@
 [![Tests](https://github.com/ThirdLetterC/cstr/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/ThirdLetterC/cstr/actions/workflows/test.yml)
 [![Benchmarks](https://github.com/ThirdLetterC/cstr/actions/workflows/benchmark.yml/badge.svg?branch=main)](https://github.com/ThirdLetterC/cstr/actions/workflows/benchmark.yml)
 
-`cstr` is a self-contained string library for ISO C11, C17, C23, and C++ (through `extern "C"`). This release is **1.0.0** and includes **Unicode 17.0.0** data.
+`cstr` is a self-contained string library for ISO C11, C17, C23, and C++ (through `extern "C"`).
 
 Copy [cstr.h](cstr.h) and [cstr.c](cstr.c) into your project to use it. The default build needs no external libraries or data files at runtime.
 
