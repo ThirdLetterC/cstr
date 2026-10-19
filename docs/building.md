@@ -130,6 +130,19 @@ Benchmark results are measurements from shared runners. They are useful for
 inspection, but do not set pass/fail performance thresholds. The README benchmark
 badge reports whether the workflow succeeded.
 
+## Fuzz testing
+
+With Clang and the libFuzzer runtime installed:
+
+```sh
+make fuzz-smoke FUZZ_CC=clang FUZZ_SECONDS=30
+```
+
+This builds three instrumented fuzz targets and runs each for 30 seconds.
+The [fuzzing guide](../fuzz/README.md) covers macOS compiler setup, direct CMake
+builds, longer runs, saved corpora, and crash reproduction. The `Fuzz` workflow
+runs the same smoke check for relevant source and build changes.
+
 ## Update the library version
 
 After `version.yml` is on the default branch, open **Actions → Update version →
@@ -157,7 +170,8 @@ Install `clang-format`, then run:
 make format
 ```
 
-This formats `cstr.c`, `cstr.h`, `test_cstr.c`, and `bench_cstr.c` in place using
+This formats `cstr.c`, `cstr.h`, `test_cstr.c`, `bench_cstr.c`, and the C sources
+and headers in `fuzz/` in place using
 the settings in `.clang-format`. The style uses four-space indentation and a
 100-column line limit.
 

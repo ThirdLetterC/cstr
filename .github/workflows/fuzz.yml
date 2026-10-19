@@ -1,0 +1,48 @@
+name: Fuzz
+
+on:
+  push:
+    paths:
+      - 'cstr.c'
+      - 'cstr.h'
+      - 'fuzz/**'
+      - 'CMakeLists.txt'
+      - 'Makefile'
+      - '.github/workflows/fuzz.yml'
+  pull_request:
+    paths:
+      - 'cstr.c'
+      - 'cstr.h'
+      - 'fuzz/**'
+      - 'CMakeLists.txt'
+      - 'Makefile'
+      - '.github/workflows/fuzz.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build and run bounded fuzzing sessions
+        run: make fuzz-smoke FUZZ_CC=clang FUZZ_SECONDS=30
+      - name: Save fuzzing corpus and crash artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzz-corpus-and-artifacts
+          path: |
+            build/fuzz/fuzz/corpus/
+            build/fuzz/fuzz/artifacts/
+          if-no-files-found: ignore
+          retention-days: 30

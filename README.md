@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/ThirdLetterC/cstr/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/ThirdLetterC/cstr/actions/workflows/test.yml)
 [![Benchmarks](https://github.com/ThirdLetterC/cstr/actions/workflows/benchmark.yml/badge.svg?branch=main)](https://github.com/ThirdLetterC/cstr/actions/workflows/benchmark.yml)
+[![Fuzz](https://github.com/ThirdLetterC/cstr/actions/workflows/fuzz.yml/badge.svg?branch=main)](https://github.com/ThirdLetterC/cstr/actions/workflows/fuzz.yml)
 
 `cstr` is a self-contained string library for ISO C11, C17, C23, and C++ (through `extern "C"`).
 
@@ -16,6 +17,7 @@ The library provides owned strings, fixed buffers, string views, Unicode text ha
 - [API guide](docs/api.md): function groups, units, and performance costs.
 - [Unicode data](docs/unicode.md): supported Unicode features, table layout, and reported binary sizes.
 - [Benchmarks](docs/benchmarks.md): recorded results and the test environment.
+- [Fuzzing](fuzz/README.md): build and run sanitizer-backed libFuzzer targets.
 
 ## License
 

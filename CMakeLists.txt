@@ -17,6 +17,7 @@ include(CMakePackageConfigHelpers)
 option(BUILD_TESTING "Build the cstr test suite" ${PROJECT_IS_TOP_LEVEL})
 option(CS_BUILD_BENCHMARKS "Build the cstr benchmark" ${PROJECT_IS_TOP_LEVEL})
 option(CS_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+option(CS_BUILD_FUZZERS "Build libFuzzer targets (requires Clang)" OFF)
 
 add_library(cstr cstr.c)
 add_library(cstr::cstr ALIAS cstr)
@@ -71,6 +72,10 @@ foreach(cstr_target IN LISTS cstr_build_targets)
         target_compile_options(${cstr_target} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 endforeach()
+
+if(CS_BUILD_FUZZERS)
+    add_subdirectory(fuzz)
+endif()
 
 install(TARGETS cstr EXPORT cstrTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
