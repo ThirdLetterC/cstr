@@ -53,6 +53,26 @@ gcc -std=c11 -O3 -Wall -Wextra -Werror -pedantic cstr.c bench_cstr.c -lm -o benc
 ./bench_cstr
 ```
 
+## Continuous integration
+
+GitHub Actions runs tests and benchmarks on pushes and pull requests that change
+their inputs. You can also start either workflow manually from the Actions tab.
+
+- `test.yml` runs unit tests and AddressSanitizer/UndefinedBehaviorSanitizer on
+  Ubuntu 26.04 with GCC and Clang, and macOS 15 (Apple Silicon) with Clang.
+- `benchmark.yml` runs optimized (`-O3`) benchmarks on Ubuntu 26.04 with GCC and
+  macOS 15 with Clang. Each job saves a `benchmark.txt` artifact for 30 days,
+  including the commit, system, compiler, flags, and results. Available backends
+  include NEON on Apple Silicon; unsupported backends are reported as `N/A`.
+
+Both workflows watch `cstr.c`, `cstr.h`, `Makefile`, and their own workflow file.
+Tests also watch `test_cstr.c`; benchmarks also watch `bench_cstr.c`.
+Documentation-only changes do not trigger either workflow.
+
+Benchmark results are measurements from shared runners. They are useful for
+inspection, but do not set pass/fail performance thresholds. The README benchmark
+badge reports whether the workflow succeeded.
+
 ## Format C code
 
 Install `clang-format`, then run:

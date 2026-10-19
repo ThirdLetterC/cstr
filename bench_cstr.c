@@ -6,7 +6,7 @@
  *   - CS_BACKEND_LIBC
  *   - CS_BACKEND_SSE2
  *   - CS_BACKEND_AVX2
- *   - CS_BACKEND_AUTO
+ *   - CS_BACKEND_NEON
  *
  * Sizes tested: 32 B, 256 B, 4 KiB, 64 KiB, 1 MiB, 16 MiB
  * Datasets: ASCII, Ukrainian UTF-8, Mixed UTF-8 + Emoji, Adversarial Repeat
@@ -57,13 +57,14 @@ static void fill_pattern(char *buf, size_t size, cs_view pat) {
 
 static void bench_op_across_backends(const char *op_name, size_t size, int mode_id,
                                      cs_view data_view) {
-    cs_backend backends[] = {CS_BACKEND_SCALAR, CS_BACKEND_LIBC, CS_BACKEND_SSE2, CS_BACKEND_AVX2};
+    cs_backend backends[] = {CS_BACKEND_SCALAR, CS_BACKEND_LIBC, CS_BACKEND_SSE2,
+                             CS_BACKEND_AVX2, CS_BACKEND_NEON};
     const size_t trials = 7;
     const size_t iters =
         (size <= 4096) ? 5000 : ((size <= 65536) ? 500 : ((size <= 1048576) ? 40 : 4));
 
     printf("%-22s | %8zu B | ", op_name, size);
-    for (size_t b = 0; b < 4; b++) {
+    for (size_t b = 0; b < sizeof(backends) / sizeof(backends[0]); b++) {
         if (!cs_backend_supported(backends[b])) {
             printf("%10s: %9s | ", cs_backend_name(backends[b]), "N/A");
             continue;

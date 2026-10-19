@@ -1,0 +1,59 @@
+name: Tests
+
+on:
+  push:
+    paths:
+      - 'cstr.c'
+      - 'cstr.h'
+      - 'test_cstr.c'
+      - 'Makefile'
+      - '.github/workflows/test.yml'
+  pull_request:
+    paths:
+      - 'cstr.c'
+      - 'cstr.h'
+      - 'test_cstr.c'
+      - 'Makefile'
+      - '.github/workflows/test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / ${{ matrix.cc }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-26.04
+            cc: gcc
+          - os: ubuntu-26.04
+            cc: clang
+          - os: macos-15
+            cc: clang
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Compiler information
+        run: |
+          uname -a
+          "$CC" --version
+        env:
+          CC: ${{ matrix.cc }}
+      - name: Unit tests
+        run: make test CC="$CC"
+        env:
+          CC: ${{ matrix.cc }}
+      - name: Address and undefined behavior sanitizers
+        run: make test-asan CC="$CC"
+        env:
+          CC: ${{ matrix.cc }}

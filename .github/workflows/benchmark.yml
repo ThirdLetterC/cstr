@@ -1,0 +1,71 @@
+name: Benchmarks
+
+on:
+  push:
+    paths:
+      - 'cstr.c'
+      - 'cstr.h'
+      - 'bench_cstr.c'
+      - 'Makefile'
+      - '.github/workflows/benchmark.yml'
+  pull_request:
+    paths:
+      - 'cstr.c'
+      - 'cstr.h'
+      - 'bench_cstr.c'
+      - 'Makefile'
+      - '.github/workflows/benchmark.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmarks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: ${{ matrix.os }} / ${{ matrix.cc }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-26.04
+            cc: gcc
+          - os: macos-15
+            cc: clang
+    defaults:
+      run:
+        shell: bash
+    env:
+      CC: ${{ matrix.cc }}
+      CFLAGS: -std=c11 -O3 -Wall -Wextra -Werror -pedantic
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Record environment
+        run: |
+          {
+            git rev-parse HEAD
+            uname -a
+            "$CC" --version
+            printf 'CFLAGS=%s\n' "$CFLAGS"
+          } > benchmark.txt
+      - name: Build benchmark
+        run: make bench_cstr
+      - name: Run benchmark
+        run: |
+          set -o pipefail
+          ./bench_cstr | tee -a benchmark.txt
+      - name: Save benchmark report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: benchmark-${{ matrix.os }}-${{ matrix.cc }}
+          path: benchmark.txt
+          if-no-files-found: error
+          retention-days: 30
