@@ -2,7 +2,7 @@
  * cstr.c — Self-Contained String & Unicode Library for ISO C11/C17/C23
  *
  * SPDX-License-Identifier: MIT AND Unicode-3.0
- * Copyright (c) 2026 cstr Contributors
+ * Copyright (c) 2026 Yehor Smoliakov
  *
  * Includes embedded Unicode 17.0.0 Character Database tables under the
  * Unicode License v3 (see full notice in the Unicode Tables section below).

@@ -2,7 +2,7 @@
  * cstr.h — Self-Contained String & Unicode Library for ISO C11/C17/C23/C++
  *
  * SPDX-License-Identifier: MIT AND Unicode-3.0
- * Copyright (c) 2026 cstr Contributors
+ * Copyright (c) 2026 Yehor Smoliakov
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

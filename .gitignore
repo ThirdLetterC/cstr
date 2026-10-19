@@ -1,0 +1,42 @@
+# C build outputs
+/test_cstr
+/test_cstr_asan
+/bench_cstr
+/build/
+*.o
+*.obj
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.dSYM/
+
+# Coverage and profiling output
+*.gcda
+*.gcno
+*.gcov
+*.profraw
+*.profdata
+
+# Generated Unicode tables and benchmark reports
+/unicode_tables.inc
+/benchmark.txt
+
+# Python environments and tool caches
+.venv/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+
+# Local editor and operating system files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
