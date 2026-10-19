@@ -32,6 +32,9 @@
 #include <bcrypt.h>
 #elif defined(__linux__) || defined(__APPLE__) || defined(__unix__)
 #include <locale.h>
+#if defined(__APPLE__)
+#include <xlocale.h>
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #endif
@@ -20337,8 +20340,8 @@ cs_status cs_hex_decode(cs_string *dst, cs_view hex_str) {
 
 /* 2. Base64 & Base64URL (RFC 4648) + Streaming */
 #if CS_ENABLE_CODECS
-static const char cs_b64_std_alpha[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static const char cs_b64_url_alpha[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+static const char cs_b64_std_alpha[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char cs_b64_url_alpha[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 static inline int cs_b64_decode_char(uint8_t c, cs_base64_variant variant) {
     if (c >= 'A' && c <= 'Z') return (int)(c - 'A');
