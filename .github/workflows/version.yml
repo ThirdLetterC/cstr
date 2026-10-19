@@ -1,0 +1,86 @@
+name: Update version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New library version (MAJOR.MINOR.PATCH, for example 1.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-library-version
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      NEW_VERSION: ${{ inputs.version }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Update version fields
+        shell: python
+        run: |
+          import os
+          import re
+          from pathlib import Path
+
+          version = os.environ["NEW_VERSION"]
+          if not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", version):
+              raise SystemExit("Version must be MAJOR.MINOR.PATCH with no leading zeros.")
+          parts = tuple(map(int, version.split(".")))
+          if any(part > 2147483647 for part in parts):
+              raise SystemExit("Version components must fit in a signed 32-bit integer.")
+
+          header = Path("cstr.h").read_text()
+          current = re.search(r'^#define CS_VERSION_STRING "([0-9.]+)"$', header, re.M)
+          if current is None:
+              raise SystemExit("Cannot find CS_VERSION_STRING in cstr.h.")
+          if parts <= tuple(map(int, current[1].split("."))):
+              raise SystemExit("New version must be greater than the current library version.")
+
+          def replace_once(text, pattern, replacement):
+              updated, count = re.subn(pattern, lambda match: replacement, text, flags=re.M)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one match for {pattern!r}; found {count}.")
+              return updated
+
+          for component, value in zip(("MAJOR", "MINOR", "PATCH"), parts):
+              header = replace_once(header, rf"^#define CS_VERSION_{component} [0-9]+$",
+                                    f"#define CS_VERSION_{component} {value}")
+          header = replace_once(header, r'^#define CS_VERSION_STRING "[0-9.]+"$',
+                                f'#define CS_VERSION_STRING "{version}"')
+          readme = replace_once(Path("README.md").read_text(),
+                                r"This release is \*\*[0-9.]+\*\*", f"This release is **{version}**")
+          project = replace_once(Path("pyproject.toml").read_text(),
+                                 r'^version = "[0-9.]+"$', f'version = "{version}"')
+          lock = replace_once(Path("uv.lock").read_text(),
+                              r'(?<=name = "cstr"\n)version = "[0-9.]+"', f'version = "{version}"')
+          for name, text in (("cstr.h", header), ("README.md", readme),
+                             ("pyproject.toml", project), ("uv.lock", lock)):
+              Path(name).write_text(text)
+          print(f"Updated version from {current[1]} to {version}.")
+      - name: Build library and benchmark
+        run: make all CC=gcc
+      - name: Unit tests
+        run: make test CC=gcc
+      - name: Address and undefined behavior sanitizers
+        run: make test-asan CC=gcc
+      - name: Commit and push version update
+        run: |
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cstr.h README.md pyproject.toml uv.lock
+          git commit -m "Bump library version to $NEW_VERSION"
+          git push origin "HEAD:refs/heads/$DEFAULT_BRANCH"

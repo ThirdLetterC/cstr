@@ -73,6 +73,25 @@ Benchmark results are measurements from shared runners. They are useful for
 inspection, but do not set pass/fail performance thresholds. The README benchmark
 badge reports whether the workflow succeeded.
 
+## Update the library version
+
+After `version.yml` is on the default branch, open **Actions → Update version →
+Run workflow** and enter a version such as `1.1.0`.
+
+The workflow accepts a `MAJOR.MINOR.PATCH` version greater than the current one.
+It updates the version macros in `cstr.h`, the release number in `README.md`,
+and the project version in `pyproject.toml` and `uv.lock`. It leaves the Unicode
+data version unchanged.
+
+It builds the library and benchmark, runs unit and sanitizer tests, then commits
+and pushes the four updated files to the default branch using `GITHUB_TOKEN`.
+Repository permissions and branch rules must allow this push. A concurrent
+change to the branch causes the push to fail rather than overwrite that change.
+
+The workflow runs its own checks because a push made with `GITHUB_TOKEN` does
+not trigger the separate push workflows. It does not create a tag or GitHub
+release. Adding the workflow does not change the current version.
+
 ## Format C code
 
 Install `clang-format`, then run:
