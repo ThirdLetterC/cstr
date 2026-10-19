@@ -53,6 +53,20 @@ gcc -std=c11 -O3 -Wall -Wextra -Werror -pedantic cstr.c bench_cstr.c -lm -o benc
 ./bench_cstr
 ```
 
+## Format C code
+
+Install `clang-format`, then run:
+
+```sh
+make format
+```
+
+This formats `cstr.c`, `cstr.h`, `test_cstr.c`, and `bench_cstr.c` in place using
+the settings in `.clang-format`. The style uses four-space indentation and a
+100-column line limit.
+
+To use a specific executable, run `make format CLANG_FORMAT=clang-format-23`.
+
 ## Generate Unicode tables
 
 Normal builds already include the Unicode tables. You only need this step when regenerating them.

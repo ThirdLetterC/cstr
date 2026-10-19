@@ -55,15 +55,12 @@ static void fill_pattern(char *buf, size_t size, cs_view pat) {
     }
 }
 
-static void bench_op_across_backends(const char *op_name, size_t size, int mode_id, cs_view data_view) {
-    cs_backend backends[] = {
-        CS_BACKEND_SCALAR,
-        CS_BACKEND_LIBC,
-        CS_BACKEND_SSE2,
-        CS_BACKEND_AVX2
-    };
+static void bench_op_across_backends(const char *op_name, size_t size, int mode_id,
+                                     cs_view data_view) {
+    cs_backend backends[] = {CS_BACKEND_SCALAR, CS_BACKEND_LIBC, CS_BACKEND_SSE2, CS_BACKEND_AVX2};
     const size_t trials = 7;
-    const size_t iters  = (size <= 4096) ? 5000 : ((size <= 65536) ? 500 : ((size <= 1048576) ? 40 : 4));
+    const size_t iters =
+        (size <= 4096) ? 5000 : ((size <= 65536) ? 500 : ((size <= 1048576) ? 40 : 4));
 
     printf("%-22s | %8zu B | ", op_name, size);
     for (size_t b = 0; b < 4; b++) {
@@ -96,7 +93,7 @@ static void bench_op_across_backends(const char *op_name, size_t size, int mode_
         }
         qsort(samples, trials, sizeof(uint64_t), cmp_u64);
         double med_ns = (double)samples[trials / 2] / (double)iters;
-        double mib_s  = ((double)size / (1024.0 * 1024.0)) / (med_ns * 1e-9);
+        double mib_s = ((double)size / (1024.0 * 1024.0)) / (med_ns * 1e-9);
         printf("%6s: %7.1f MiB/s (%7.1f ns) | ", cs_backend_name(backends[b]), mib_s, med_ns);
     }
     printf("\n");
@@ -106,31 +103,38 @@ static void bench_op_across_backends(const char *op_name, size_t size, int mode_
 int main(void) {
     cs_runtime_info_t info;
     cs_runtime_info(&info);
-    printf("========================================================================================================================\n");
+    printf("======================================================================================="
+           "=================================\n");
     printf("cstr Benchmark Report (v%s, Unicode %s, Arch: %s, Auto Backend: %s)\n",
            CS_VERSION_STRING, CS_UNICODE_VERSION, info.arch_name, info.backend_name);
-    printf("========================================================================================================================\n");
+    printf("======================================================================================="
+           "=================================\n");
 
-    size_t sizes[] = { 32, 256, 4096, 65536, 1048576, 16777216 };
+    size_t sizes[] = {32, 256, 4096, 65536, 1048576, 16777216};
     for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
         size_t sz = sizes[i];
         char *buf = (char *)malloc(sz + 32);
-        if (!buf) continue;
+        if (!buf)
+            continue;
 
-        fill_pattern(buf, sz, CS_LIT("abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_"));
+        fill_pattern(buf, sz,
+                     CS_LIT("abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_"));
         if (sz >= 14) {
             memcpy(buf + sz - 14, "TARGET_NEEDLE!", 14);
         }
-        cs_view v_ascii = { buf, sz };
-        bench_op_across_backends("is_ascii (ASCII)",      sz, 0, v_ascii);
+        cs_view v_ascii = {buf, sz};
+        bench_op_across_backends("is_ascii (ASCII)", sz, 0, v_ascii);
         bench_op_across_backends("validate_utf8 (ASCII)", sz, 1, v_ascii);
-        bench_op_across_backends("find_byte (end)",       sz, 2, v_ascii);
+        bench_op_across_backends("find_byte (end)", sz, 2, v_ascii);
         bench_op_across_backends("find_substr (Two-Way)", sz, 3, v_ascii);
 
-        fill_pattern(buf, sz, CS_LIT("Самодостатня бібліотека рядків для C (Ґудзик, Єдність, Історія, Їжак) — UTF-8 Benchmark "));
-        cs_view v_ua = { buf, sz };
-        bench_op_across_backends("validate_utf8 (UA)",    sz, 1, v_ua);
-        printf("------------------------------------------------------------------------------------------------------------------------\n");
+        fill_pattern(buf, sz,
+                     CS_LIT("Самодостатня бібліотека рядків для C (Ґудзик, Єдність, Історія, Їжак) "
+                            "— UTF-8 Benchmark "));
+        cs_view v_ua = {buf, sz};
+        bench_op_across_backends("validate_utf8 (UA)", sz, 1, v_ua);
+        printf("-----------------------------------------------------------------------------------"
+               "-------------------------------------\n");
 
         free(buf);
     }
@@ -158,10 +162,11 @@ int main(void) {
     g_bench_sink += s_pre.len;
     cs_destroy(&s_pre);
 
-    printf("Builder 10,000 appends (%zu B total): dynamic=%llu us (%.2f ns/op), preallocated=%llu us (%.2f ns/op)\n",
-           frag_count * frag.len,
-           (unsigned long long)((t1 - t0) / 1000ULL), (double)(t1 - t0) / (double)frag_count,
-           (unsigned long long)((t3 - t2) / 1000ULL), (double)(t3 - t2) / (double)frag_count);
+    printf("Builder 10,000 appends (%zu B total): dynamic=%llu us (%.2f ns/op), preallocated=%llu "
+           "us (%.2f ns/op)\n",
+           frag_count * frag.len, (unsigned long long)((t1 - t0) / 1000ULL),
+           (double)(t1 - t0) / (double)frag_count, (unsigned long long)((t3 - t2) / 1000ULL),
+           (double)(t3 - t2) / (double)frag_count);
 
     return 0;
 }
