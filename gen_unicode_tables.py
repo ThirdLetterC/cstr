@@ -302,7 +302,7 @@ def load_nrm_file(buf, off):
     ix = struct.unpack_from("<22i", buf, base)
     trie_off = base + ix[0]
     extra_off = base + ix[1]
-    sig, opts, idx_len, data_len_lo, i3n, dn_lo, sh_hi = struct.unpack_from(
+    _sig, opts, idx_len, data_len_lo, _i3n, _dn_lo, sh_hi = struct.unpack_from(
         "<IHHHHHH", buf, trie_off
     )
     data_len = ((opts & 0xF000) << 4) | data_len_lo
@@ -327,9 +327,8 @@ def decode_ucase_cp(icu, trie_ptr, exc_arr, cp):
         if utype == 1:
             if delta != 0:
                 uc = tc = (cp + delta,)
-        elif utype >= 2:
-            if delta != 0:
-                lc = cf = scf = (cp + delta,)
+        elif utype >= 2 and delta != 0:
+            lc = cf = scf = (cp + delta,)
         return is_upper, is_lower, is_cased, is_ci, is_sd, lc, uc, tc, cf, scf
 
     pe = props >> 4
@@ -340,7 +339,7 @@ def decode_ucase_cp(icu, trie_ptr, exc_arr, cp):
 
     def get_slot(slot_bit_idx):
         mask = (1 << slot_bit_idx) - 1
-        prev_bits = bin(exc_word & mask).count("1")
+        prev_bits = (exc_word & mask).bit_count()
         if double_slots:
             off = pe + prev_bits * 2
             val = (exc_arr[off] << 16) | exc_arr[off + 1]
@@ -479,9 +478,9 @@ def generate(out_path):
     uemoji_raw = icudtl[9006464 : 9006464 + 14400]
     cbrk_raw = icudtl[536512 : 536512 + 14048]
 
-    pt_buf, pt_st = make_utrie2(pt_raw, 4628, 19480, 2624, 4756, 0x110000, 24104)
-    pv_buf, pv_st = make_utrie2(pv_raw, 5924, 37208, 2624, 6052, 0x110000, 43128)
-    uc_buf, uc_st = make_utrie2(uc_raw, 3468, 10076, 392, 3592, 0xE0800, 13540)
+    _pt_buf, pt_st = make_utrie2(pt_raw, 4628, 19480, 2624, 4756, 0x110000, 24104)
+    _pv_buf, pv_st = make_utrie2(pv_raw, 5924, 37208, 2624, 6052, 0x110000, 43128)
+    _uc_buf, uc_st = make_utrie2(uc_raw, 3468, 10076, 392, 3592, 0xE0800, 13540)
     exc78_u16 = struct.unpack_from(f"<{len(exc_raw) // 2}H", exc_raw, 0)
 
     nfc_ix = list(struct.unpack_from("<22i", cr, 0x25581D0))
@@ -594,18 +593,19 @@ def generate(out_path):
         cp_palette_idx[cp] = idx
 
         # Case mapping row
-        if not (0xD800 <= cp <= 0xDFFF):
-            if lc != (cp,) or uc != (cp,) or tc != (cp,) or cf != (cp,) or scf != (cp,):
-                case_rows.append(
-                    (
-                        cp,
-                        encode_case_target(cp, lc),
-                        encode_case_target(cp, uc),
-                        encode_case_target(cp, tc),
-                        encode_case_target(cp, cf),
-                        encode_case_target(cp, scf),
-                    )
+        if not (0xD800 <= cp <= 0xDFFF) and (
+            lc != (cp,) or uc != (cp,) or tc != (cp,) or cf != (cp,) or scf != (cp,)
+        ):
+            case_rows.append(
+                (
+                    cp,
+                    encode_case_target(cp, lc),
+                    encode_case_target(cp, uc),
+                    encode_case_target(cp, tc),
+                    encode_case_target(cp, cf),
+                    encode_case_target(cp, scf),
                 )
+            )
 
         # Normalization decomposition & canonical composition rows
         if not (0xAC00 <= cp <= 0xD7A3 or 0xD800 <= cp <= 0xDFFF):
