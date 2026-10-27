@@ -1,5 +1,5 @@
 /* ==========================================================================
- * cstr.h — Self-Contained String & Unicode Library for ISO C11/C17/C23/C++
+ * cstr.h — Self-Contained String & Unicode Library for ISO C11/C17/C23
  *
  * SPDX-License-Identifier: MIT AND Unicode-3.0
  * Copyright (c) 2026 Yehor Smoliakov
@@ -27,10 +27,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* ==========================================================================
  * 1. Configuration & Feature Flags (Section 17)
@@ -167,11 +163,7 @@ typedef struct cs_builder {
 } cs_builder;
 
 /* Convenience view constructors */
-#ifdef __cplusplus
-#define CS_LIT(literal) (cs_view{(literal), sizeof(literal) - 1U})
-#else
 #define CS_LIT(literal) ((cs_view){(literal), sizeof(literal) - 1U})
-#endif
 
 static inline cs_view cs_empty_view(void) {
     cs_view v = {NULL, 0};
@@ -1057,9 +1049,5 @@ void cs_runtime_info(cs_runtime_info_t *out_info);
 bool cs_backend_supported(cs_backend backend);
 cs_status cs_set_forced_backend(cs_backend backend);
 const char *cs_backend_name(cs_backend backend);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* CSTR_H_INCLUDED */

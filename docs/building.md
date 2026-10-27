@@ -4,7 +4,7 @@
 
 ## Add cstr to a project
 
-Copy [cstr.h](../cstr.h) and [cstr.c](../cstr.c) into your project. Include `cstr.h` where you use the API, and compile `cstr.c` with your sources. C++ callers use the header's `extern "C"` declarations.
+Copy [cstr.h](../cstr.h) and [cstr.c](../cstr.c) into your project. Include `cstr.h` where you use the API, and compile `cstr.c` with your C sources.
 
 The library supports ISO C11, C17, and C23. The commands below use C11 and GCC. Run them from the project root. They link the system math library with `-lm`, as the Makefile does.
 
