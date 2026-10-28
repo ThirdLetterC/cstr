@@ -105,11 +105,7 @@ static inline bool cs_mul_overflow_sz(size_t a, size_t b, size_t *out) {
 #endif
 }
 
-#if defined(__cplusplus)
-#define CS_ALIGNOF(T) alignof(T)
-#else
 #define CS_ALIGNOF(T) _Alignof(T)
-#endif
 
 /* Internal static empty NUL sentinel so cs_c_str() is always non-NULL */
 static const char cs_empty_cstr_sentinel[1] = {'\0'};
