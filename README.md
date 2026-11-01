@@ -6,6 +6,8 @@
 
 `cstr` is a self-contained string library for ISO C11, C17, and C23.
 
+This release is **1.2.0**.
+
 Copy [cstr.h](cstr.h) and [cstr.c](cstr.c) into your project to use it. The default build needs no external libraries or data files at runtime.
 
 The library provides owned strings, fixed buffers, string views, Unicode text handling, search, formatting, codecs, regular expressions, and hashing.
