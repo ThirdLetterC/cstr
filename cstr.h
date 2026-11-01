@@ -65,9 +65,9 @@
 #endif
 
 #define CS_VERSION_MAJOR 1
-#define CS_VERSION_MINOR 2
+#define CS_VERSION_MINOR 3
 #define CS_VERSION_PATCH 0
-#define CS_VERSION_STRING "1.2.0"
+#define CS_VERSION_STRING "1.3.0"
 #define CS_UNICODE_VERSION "17.0.0"
 
 #if defined(__GNUC__) || defined(__clang__)
