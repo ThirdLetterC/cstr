@@ -70,3 +70,23 @@ jobs:
           ctest --test-dir build/ci --output-on-failure
         env:
           CC: ${{ matrix.cc }}
+
+  msvc:
+    name: Windows / MSVC / ${{ matrix.config }} / shared=${{ matrix.shared }}
+    runs-on: windows-2022
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+        shared: ['OFF', 'ON']
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Configure
+        run: cmake -S . -B build/msvc -G "Visual Studio 17 2022" -A x64 -DBUILD_SHARED_LIBS=${{ matrix.shared }}
+      - name: Build library, tests, and benchmark
+        run: cmake --build build/msvc --config ${{ matrix.config }} --parallel 2
+      - name: Unit tests
+        run: ctest --test-dir build/msvc -C ${{ matrix.config }} --output-on-failure

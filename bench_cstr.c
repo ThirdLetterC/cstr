@@ -23,10 +23,24 @@
 #include <string.h>
 #include <time.h>
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 static uint64_t now_ns(void) {
+#if defined(_WIN32)
+    LARGE_INTEGER counter, frequency;
+    if (!QueryPerformanceFrequency(&frequency) || !QueryPerformanceCounter(&counter))
+        abort();
+    uint64_t ticks = (uint64_t)counter.QuadPart;
+    uint64_t hz = (uint64_t)frequency.QuadPart;
+    return (ticks / hz) * 1000000000ULL + (ticks % hz) * 1000000000ULL / hz;
+#else
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+#endif
 }
 
 static int cmp_u64(const void *a, const void *b) {

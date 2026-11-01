@@ -436,6 +436,31 @@ static void test_regex_glob_and_hashing(void) {
     cs_destroy(&rep);
 }
 
+static void test_windows_aligned_allocator(void) {
+#if defined(_WIN32) && !CS_NO_HEAP && !CS_USE_MIMALLOC
+    cs_allocator a = cs_default_allocator();
+    unsigned char *p = a.alloc(a.ctx, 64, 64);
+    TEST_ASSERT(p != NULL);
+    if (!p)
+        return;
+    TEST_ASSERT((uintptr_t)p % 64U == 0);
+    memset(p, 0x5A, 64);
+    unsigned char *grown = a.realloc(a.ctx, p, 64, 256, 64);
+    TEST_ASSERT(grown != NULL);
+    if (!grown) {
+        a.free(a.ctx, p, 64, 64);
+        return;
+    }
+    TEST_ASSERT((uintptr_t)grown % 64U == 0);
+    for (size_t i = 0; i < 64; i++)
+        TEST_ASSERT(grown[i] == 0x5A);
+    TEST_ASSERT(a.realloc(a.ctx, grown, 256, 0, 64) == NULL);
+    p = a.alloc(a.ctx, 64, 64);
+    TEST_ASSERT(p != NULL);
+    a.free(a.ctx, p, 64, 64);
+#endif
+}
+
 static void test_differential_backends_and_guard_page(void) {
     cs_backend candidates[] = {CS_BACKEND_SCALAR, CS_BACKEND_LIBC,   CS_BACKEND_SSE2,
                                CS_BACKEND_AVX2,   CS_BACKEND_AVX512, CS_BACKEND_NEON};
@@ -456,6 +481,16 @@ static void test_differential_backends_and_guard_page(void) {
         TEST_ASSERT(cs_rfind_byte(test_text, '0', test_text.len, &p2) == CS_OK &&
                     p2 == test_text.len - 11U);
         TEST_ASSERT(cs_find(test_text, CS_LIT("Їжак"), 0, &p1) == CS_OK);
+
+        /* Exercise every bit in the SSE2/AVX2 search masks, including bit 31. */
+        char bytes[64];
+        for (size_t bit = 0; bit < sizeof(bytes); bit++) {
+            memset(bytes, 'a', sizeof(bytes));
+            bytes[bit] = '!';
+            cs_view v = cs_sv_from_bytes(bytes, sizeof(bytes));
+            TEST_ASSERT(cs_find_byte(v, '!', 0, &p1) == CS_OK && p1 == bit);
+            TEST_ASSERT(cs_rfind_byte(v, '!', v.len, &p2) == CS_OK && p2 == bit);
+        }
     }
     TEST_ASSERT(cs_set_forced_backend(CS_BACKEND_AUTO) == CS_OK);
 
@@ -578,6 +613,7 @@ int main(void) {
     test_utf8_and_utf16_32();
     test_search_split_format_codecs();
     test_regex_glob_and_hashing();
+    test_windows_aligned_allocator();
     test_differential_backends_and_guard_page();
     test_unicode_17_conformance();
 

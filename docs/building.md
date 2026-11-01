@@ -63,6 +63,39 @@ target_link_libraries(my_app PRIVATE cstr::cstr)
 CMake reads the library version from `cstr.h`, so version updates do not need
 another version field in the build files.
 
+## Windows with MSVC
+
+Use Visual Studio 2019 16.8 or newer (or the C++ Build Tools), with the
+Desktop development with C++ workload, a Windows SDK, and CMake installed.
+For Visual Studio 2022, run these commands from the project root:
+
+```bat
+cmake -S . -B build/msvc -G "Visual Studio 17 2022" -A x64
+cmake --build build/msvc --config Release --parallel
+ctest --test-dir build/msvc -C Release --output-on-failure
+```
+
+Choose the generator matching your Visual Studio version, or omit `-G` to let
+CMake select it. Use `Debug` in place of `Release` for a debug build. Both static
+and shared (`-DBUILD_SHARED_LIBS=ON`) libraries are supported. Run the benchmark
+with `cmake --build build/msvc --config Release --target bench`.
+
+CMake selects C11, enables UTF-8 source and execution encodings, and links
+`bcrypt` for OS-generated hash seeds. MSVC builds use Windows interlocked
+operations for internal atomics and retain runtime SSE2/AVX2 dispatch without
+requiring `/arch:AVX2` or experimental C11 atomics support. The benchmark uses
+the Windows performance counter. `CS_ENABLE_SANITIZERS` and the libFuzzer
+targets require GCC or Clang with a Unix-style driver; they are not MSVC options.
+
+To compile the sources directly, use an **x64 Native Tools Command Prompt**:
+
+```bat
+cl /nologo /std:c11 /utf-8 /O2 /W4 /D_CRT_SECURE_NO_WARNINGS cstr.c test_cstr.c bcrypt.lib /Fe:test_cstr.exe
+test_cstr.exe
+```
+
+The Makefile uses GCC/Clang flags; use CMake or `cl` for MSVC.
+
 ## Run tests
 
 With Make:
@@ -116,6 +149,8 @@ their inputs. You can also start either workflow manually from the Actions tab.
 - `test.yml` runs unit tests and AddressSanitizer/UndefinedBehaviorSanitizer on
   Ubuntu 26.04 with GCC and Clang, and macOS 15 (Apple Silicon) with Clang.
   It also builds the library, tests, and benchmark with CMake and runs CTest.
+  Windows Server 2022 jobs use MSVC and CMake to build and test static and shared
+  libraries in Debug and Release, including compilation of the benchmark.
 - `benchmark.yml` runs optimized (`-O3`) benchmarks on Ubuntu 26.04 with GCC and
   macOS 15 with Clang. Each job saves a `benchmark.txt` artifact for 30 days,
   including the commit, system, compiler, flags, and results. Available backends

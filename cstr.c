@@ -19,7 +19,9 @@
 #include <float.h>
 #include <limits.h>
 #include <math.h>
+#if !defined(_MSC_VER) || defined(__clang__)
 #include <stdatomic.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +32,7 @@
 #endif
 #include <windows.h>
 #include <bcrypt.h>
+#include <malloc.h>
 #elif defined(__linux__) || defined(__APPLE__) || defined(__unix__)
 #include <locale.h>
 #if defined(__APPLE__)
@@ -73,6 +76,12 @@
 #define CS_TARGET_SSE2 __attribute__((target("sse2")))
 #define CS_TARGET_AVX2 __attribute__((target("avx2")))
 #define CS_TARGET_AVX512 __attribute__((target("avx512bw,avx512vl")))
+#elif defined(_MSC_VER) && CS_ARCH_X86_64
+#define CS_TARGET_SSE2
+/* Keep AVX instructions behind runtime dispatch without enabling /arch:AVX2
+ * for the whole translation unit (which would raise the baseline ISA). */
+#define CS_TARGET_AVX2 __declspec(noinline)
+#define CS_TARGET_AVX512 __declspec(noinline)
 #else
 #define CS_TARGET_SSE2
 #define CS_TARGET_AVX2
@@ -106,6 +115,43 @@ static inline bool cs_mul_overflow_sz(size_t a, size_t b, size_t *out) {
 }
 
 #define CS_ALIGNOF(T) _Alignof(T)
+#if defined(_WIN32)
+#define CS_MALLOC_ALIGNMENT MEMORY_ALLOCATION_ALIGNMENT
+#else
+#define CS_MALLOC_ALIGNMENT CS_ALIGNOF(max_align_t)
+#endif
+
+/* MSVC's C11 atomics require an experimental compiler option. Use Windows
+ * interlocked operations instead; their full barriers satisfy these orders. */
+#if defined(_MSC_VER) && !defined(__clang__)
+typedef volatile LONG cs_atomic_int;
+static inline int cs_atomic_load_acquire(cs_atomic_int *value) {
+    return (int)InterlockedCompareExchange(value, 0, 0);
+}
+static inline void cs_atomic_store_release(cs_atomic_int *value, int desired) {
+    (void)InterlockedExchange(value, (LONG)desired);
+}
+static inline bool cs_atomic_compare_exchange(cs_atomic_int *value, int *expected, int desired) {
+    LONG previous = InterlockedCompareExchange(value, (LONG)desired, (LONG)*expected);
+    if (previous == (LONG)*expected)
+        return true;
+    *expected = (int)previous;
+    return false;
+}
+#define cs_atomic_load_relaxed cs_atomic_load_acquire
+#define cs_atomic_store_relaxed cs_atomic_store_release
+#else
+typedef atomic_int cs_atomic_int;
+#define cs_atomic_load_acquire(value) atomic_load_explicit(value, memory_order_acquire)
+#define cs_atomic_load_relaxed(value) atomic_load_explicit(value, memory_order_relaxed)
+#define cs_atomic_store_release(value, desired) \
+    atomic_store_explicit(value, desired, memory_order_release)
+#define cs_atomic_store_relaxed(value, desired) \
+    atomic_store_explicit(value, desired, memory_order_relaxed)
+#define cs_atomic_compare_exchange(value, expected, desired) \
+    atomic_compare_exchange_strong_explicit(value, expected, desired, \
+                                           memory_order_acq_rel, memory_order_acquire)
+#endif
 
 /* Internal static empty NUL sentinel so cs_c_str() is always non-NULL */
 static const char cs_empty_cstr_sentinel[1] = {'\0'};
@@ -114,10 +160,10 @@ static const char cs_empty_cstr_sentinel[1] = {'\0'};
  * Section 15: Runtime CPU Dispatch & Backend Selection
  * ========================================================================== */
 
-static atomic_int cs_g_init_state = 0; /* 0 = uninit, 1 = in-progress, 2 = done */
+static cs_atomic_int cs_g_init_state = 0; /* 0 = uninit, 1 = in-progress, 2 = done */
 static uint32_t cs_g_supported_mask = (1U << CS_BACKEND_SCALAR) | (1U << CS_BACKEND_LIBC);
 static cs_backend cs_g_auto_backend = CS_BACKEND_SCALAR;
-static atomic_int cs_g_forced_backend = CS_BACKEND_AUTO;
+static cs_atomic_int cs_g_forced_backend = CS_BACKEND_AUTO;
 
 #if CS_ARCH_X86_64 && CS_ENABLE_SIMD && !CS_FORCE_SCALAR
 static inline uint64_t cs_xgetbv_u64(uint32_t idx) {
@@ -192,12 +238,11 @@ static void cs_detect_x86_features(uint32_t *out_mask, cs_backend *out_best) {
 #endif
 
 static void cs_ensure_dispatch_init(void) {
-    int state = atomic_load_explicit(&cs_g_init_state, memory_order_acquire);
+    int state = cs_atomic_load_acquire(&cs_g_init_state);
     if (state == 2)
         return;
     int expected = 0;
-    if (atomic_compare_exchange_strong_explicit(&cs_g_init_state, &expected, 1,
-                                                memory_order_acq_rel, memory_order_acquire)) {
+    if (cs_atomic_compare_exchange(&cs_g_init_state, &expected, 1)) {
         uint32_t mask = (1U << CS_BACKEND_SCALAR) | (1U << CS_BACKEND_LIBC);
         cs_backend best = CS_BACKEND_LIBC;
 #if CS_FORCE_SCALAR || !CS_ENABLE_SIMD
@@ -211,9 +256,9 @@ static void cs_ensure_dispatch_init(void) {
 #endif
         cs_g_supported_mask = mask;
         cs_g_auto_backend = best;
-        atomic_store_explicit(&cs_g_init_state, 2, memory_order_release);
+        cs_atomic_store_release(&cs_g_init_state, 2);
     } else {
-        while (atomic_load_explicit(&cs_g_init_state, memory_order_acquire) != 2) {
+        while (cs_atomic_load_acquire(&cs_g_init_state) != 2) {
             /* Spin briefly until initialization finishes */
         }
     }
@@ -222,7 +267,7 @@ static void cs_ensure_dispatch_init(void) {
 static inline cs_backend cs_active_backend(void) {
     cs_ensure_dispatch_init();
     cs_backend forced =
-        (cs_backend)atomic_load_explicit(&cs_g_forced_backend, memory_order_relaxed);
+        (cs_backend)cs_atomic_load_relaxed(&cs_g_forced_backend);
     return (forced != CS_BACKEND_AUTO) ? forced : cs_g_auto_backend;
 }
 
@@ -254,7 +299,7 @@ void cs_runtime_info(cs_runtime_info_t *out_info) {
     cs_backend active = cs_active_backend();
     out_info->active_backend = active;
     out_info->forced_backend =
-        (cs_backend)atomic_load_explicit(&cs_g_forced_backend, memory_order_relaxed);
+        (cs_backend)cs_atomic_load_relaxed(&cs_g_forced_backend);
     out_info->supported_mask = cs_g_supported_mask;
 #if CS_ARCH_X86_64
     out_info->arch_name = "x86_64";
@@ -284,7 +329,7 @@ cs_status cs_set_forced_backend(cs_backend backend) {
     if (backend != CS_BACKEND_AUTO && !cs_backend_supported(backend)) {
         return CS_EUNSUPPORTED;
     }
-    atomic_store_explicit(&cs_g_forced_backend, (int)backend, memory_order_relaxed);
+    cs_atomic_store_relaxed(&cs_g_forced_backend, (int)backend);
     return CS_OK;
 }
 
@@ -370,6 +415,29 @@ static void cs_ascii_case_convert_scalar(uint8_t *dst, const uint8_t *src, size_
 }
 
 #if CS_ARCH_X86_64 && CS_ENABLE_SIMD && !CS_FORCE_SCALAR
+/* Callers only pass nonzero SIMD masks. */
+static inline unsigned int cs_mask_first_bit(uint32_t mask) {
+#if defined(_MSC_VER)
+    unsigned long index;
+    _BitScanForward(&index, (unsigned long)mask);
+    return (unsigned int)index;
+#else
+    return (unsigned int)__builtin_ctz((unsigned int)mask);
+#endif
+}
+
+static inline unsigned int cs_mask_last_bit(uint32_t mask) {
+#if defined(_MSC_VER)
+    unsigned long index;
+    _BitScanReverse(&index, (unsigned long)mask);
+    return (unsigned int)index;
+#else
+    return 31U - (unsigned int)__builtin_clz((unsigned int)mask);
+#endif
+}
+#endif
+
+#if CS_ARCH_X86_64 && CS_ENABLE_SIMD && !CS_FORCE_SCALAR
 CS_TARGET_SSE2
 static bool cs_is_ascii_sse2(const uint8_t *p, size_t len) {
     size_t i = 0;
@@ -403,7 +471,7 @@ static size_t cs_find_byte_sse2(const uint8_t *p, size_t len, uint8_t needle) {
         __m128i eq = _mm_cmpeq_epi8(v, vn);
         int mask = _mm_movemask_epi8(eq);
         if (mask != 0) {
-            return i + (size_t)__builtin_ctz((unsigned int)mask);
+            return i + (size_t)cs_mask_first_bit((uint32_t)mask);
         }
         i += 16;
     }
@@ -420,7 +488,7 @@ static size_t cs_find_byte_avx2(const uint8_t *p, size_t len, uint8_t needle) {
         __m256i eq = _mm256_cmpeq_epi8(v, vn);
         int mask = _mm256_movemask_epi8(eq);
         if (mask != 0) {
-            return i + (size_t)__builtin_ctz((unsigned int)mask);
+            return i + (size_t)cs_mask_first_bit((uint32_t)mask);
         }
         i += 32;
     }
@@ -438,7 +506,7 @@ static size_t cs_rfind_byte_sse2(const uint8_t *p, size_t len, uint8_t needle) {
         __m128i eq = _mm_cmpeq_epi8(v, vn);
         unsigned int mask = (unsigned int)_mm_movemask_epi8(eq);
         if (mask != 0) {
-            return i + (size_t)(31 - __builtin_clz(mask));
+            return i + (size_t)cs_mask_last_bit((uint32_t)mask);
         }
     }
     return cs_rfind_byte_scalar(p, i, needle);
@@ -454,7 +522,7 @@ static size_t cs_rfind_byte_avx2(const uint8_t *p, size_t len, uint8_t needle) {
         __m256i eq = _mm256_cmpeq_epi8(v, vn);
         unsigned int mask = (unsigned int)_mm256_movemask_epi8(eq);
         if (mask != 0) {
-            return i + (size_t)(31 - __builtin_clz(mask));
+            return i + (size_t)cs_mask_last_bit((uint32_t)mask);
         }
     }
     return cs_rfind_byte_sse2(p, i, needle);
@@ -672,8 +740,8 @@ static void *cs_std_alloc(void *ctx, size_t size, size_t align) {
     (void)ctx;
     if (size == 0)
         size = 1;
-    if (align > CS_ALIGNOF(max_align_t)) {
-#if defined(_MSC_VER)
+    if (align > CS_MALLOC_ALIGNMENT) {
+#if defined(_WIN32)
         return _aligned_malloc(size, align);
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
         size_t mask = align - 1U;
@@ -689,6 +757,15 @@ static void *cs_std_alloc(void *ctx, size_t size, size_t align) {
 static void *cs_std_realloc(void *ctx, void *ptr, size_t old_size, size_t new_size, size_t align) {
     (void)ctx;
     (void)old_size;
+#if defined(_WIN32)
+    if (align > CS_MALLOC_ALIGNMENT) {
+        if (new_size == 0) {
+            _aligned_free(ptr);
+            return NULL;
+        }
+        return _aligned_realloc(ptr, new_size, align);
+    }
+#endif
     (void)align;
     if (new_size == 0) {
         free(ptr);
@@ -700,8 +777,8 @@ static void *cs_std_realloc(void *ctx, void *ptr, size_t old_size, size_t new_si
 static void cs_std_free(void *ctx, void *ptr, size_t size, size_t align) {
     (void)ctx;
     (void)size;
-#if defined(_MSC_VER)
-    if (align > CS_ALIGNOF(max_align_t)) {
+#if defined(_WIN32)
+    if (align > CS_MALLOC_ALIGNMENT) {
         _aligned_free(ptr);
         return;
     }
@@ -736,7 +813,7 @@ static void cs_null_free(void *ctx, void *ptr, size_t size, size_t align) {
 }
 #endif
 
-static atomic_int cs_g_custom_alloc_set = 0;
+static cs_atomic_int cs_g_custom_alloc_set = 0;
 static cs_allocator cs_g_custom_alloc = {NULL, NULL, NULL, NULL};
 
 static cs_allocator cs_builtin_default_allocator(void) {
@@ -761,7 +838,7 @@ static cs_allocator cs_builtin_default_allocator(void) {
 }
 
 cs_allocator cs_default_allocator(void) {
-    if (atomic_load_explicit(&cs_g_custom_alloc_set, memory_order_acquire) != 0) {
+    if (cs_atomic_load_acquire(&cs_g_custom_alloc_set) != 0) {
         return cs_g_custom_alloc;
     }
     return cs_builtin_default_allocator();
@@ -771,12 +848,12 @@ cs_status cs_set_default_allocator(cs_allocator alloc) {
     if (!alloc.alloc || !alloc.free)
         return CS_EINVAL;
     cs_g_custom_alloc = alloc;
-    atomic_store_explicit(&cs_g_custom_alloc_set, 1, memory_order_release);
+    cs_atomic_store_release(&cs_g_custom_alloc_set, 1);
     return CS_OK;
 }
 
 void cs_reset_default_allocator(void) {
-    atomic_store_explicit(&cs_g_custom_alloc_set, 0, memory_order_release);
+    cs_atomic_store_release(&cs_g_custom_alloc_set, 0);
 }
 
 void cs_workspace_init(cs_workspace *ws, void *mem, size_t size) {
