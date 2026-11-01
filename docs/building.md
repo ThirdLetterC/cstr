@@ -96,6 +96,36 @@ test_cstr.exe
 
 The Makefile uses GCC/Clang flags; use CMake or `cl` for MSVC.
 
+## FreeBSD and OpenBSD
+
+Use GNU Make (`gmake`) for the supplied Makefile. On FreeBSD:
+
+```sh
+pkg install -y gmake gcc cmake
+gmake test CC=gcc
+```
+
+On OpenBSD, use the base system's Clang compiler:
+
+```sh
+pkg_add gmake cmake
+gmake test CC=cc
+```
+
+Both systems also support the CMake build, including the benchmark:
+
+```sh
+cmake -S . -B build/bsd -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cc
+cmake --build build/bsd --parallel 2
+ctest --test-dir build/bsd --output-on-failure
+```
+
+BSD builds use `posix_memalign` for extended alignment and `arc4random_buf` for
+OS-generated hash seeds. FreeBSD uses its extended locale API for numeric parsing;
+OpenBSD uses `strtod`, whose numeric locale is always C. OS-backed collation uses
+the locales provided by each system; OpenBSD does not provide language-specific
+collation.
+
 ## Run tests
 
 With Make:
@@ -151,6 +181,9 @@ their inputs. You can also start either workflow manually from the Actions tab.
   It also builds the library, tests, and benchmark with CMake and runs CTest.
   Windows Server 2022 jobs use MSVC and CMake to build and test static and shared
   libraries in Debug and Release, including compilation of the benchmark.
+  FreeBSD 14.1 and OpenBSD 7.9 jobs run inside `vmactions` VMs on Ubuntu hosts.
+  FreeBSD tests with GCC through `gmake` and Clang through CMake; OpenBSD uses
+  Clang for both. Both VM jobs build the benchmark and run CTest.
 - `benchmark.yml` runs optimized (`-O3`) benchmarks on Ubuntu 26.04 with GCC and
   macOS 15 with Clang. Each job saves a `benchmark.txt` artifact for 30 days,
   including the commit, system, compiler, flags, and results. Available backends

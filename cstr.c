@@ -33,9 +33,10 @@
 #include <windows.h>
 #include <bcrypt.h>
 #include <malloc.h>
-#elif defined(__linux__) || defined(__APPLE__) || defined(__unix__)
+#elif defined(__linux__) || defined(__APPLE__) || defined(__unix__) || defined(__FreeBSD__) || \
+    defined(__OpenBSD__)
 #include <locale.h>
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
 #include <xlocale.h>
 #endif
 #include <fcntl.h>
@@ -743,6 +744,9 @@ static void *cs_std_alloc(void *ctx, size_t size, size_t align) {
     if (align > CS_MALLOC_ALIGNMENT) {
 #if defined(_WIN32)
         return _aligned_malloc(size, align);
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+        void *ptr = NULL;
+        return posix_memalign(&ptr, align, size) == 0 ? ptr : NULL;
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
         size_t mask = align - 1U;
         if ((align & mask) == 0U) {
@@ -764,6 +768,21 @@ static void *cs_std_realloc(void *ctx, void *ptr, size_t old_size, size_t new_si
             return NULL;
         }
         return _aligned_realloc(ptr, new_size, align);
+    }
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+    /* realloc need not preserve the alignment returned by posix_memalign. */
+    if (align > CS_MALLOC_ALIGNMENT) {
+        if (new_size == 0) {
+            free(ptr);
+            return NULL;
+        }
+        void *next = cs_std_alloc(ctx, new_size, align);
+        if (!next)
+            return NULL;
+        if (ptr)
+            memcpy(next, ptr, old_size < new_size ? old_size : new_size);
+        free(ptr);
+        return next;
     }
 #endif
     (void)align;
@@ -13143,7 +13162,7 @@ cs_status cs_compare_collation(cs_view a, cs_view b, const char *locale_name, in
         (b.len > 0 && memchr(b.data, '\0', b.len) != NULL)) {
         return CS_EINVAL;
     }
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     locale_t loc = newlocale(LC_COLLATE_MASK, locale_name, (locale_t)0);
     if (!loc)
         return CS_EUNSUPPORTED;
@@ -16373,12 +16392,13 @@ static cs_status cs_parse_f64_common(cs_view v, cs_num_parse_options opts, doubl
     /* Parse via C locale strtod_l (or decimal replacement if locale uses comma) */
     errno = 0;
     char *endptr = NULL;
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
     locale_t cloc = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
     double val = cloc ? strtod_l(clean, &endptr, cloc) : strtod(clean, &endptr);
     if (cloc)
         freelocale(cloc);
 #else
+    /* OpenBSD keeps LC_NUMERIC in the C locale and does not provide strtod_l. */
     double val = strtod(clean, &endptr);
 #endif
     if (errno == ERANGE)
@@ -19781,6 +19801,9 @@ cs_status cs_hash_seed_from_os(uint8_t out_key[16]) {
         return CS_OK;
     }
     return CS_EUNSUPPORTED;
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+    arc4random_buf(out_key, 16U);
+    return CS_OK;
 #elif defined(__linux__) || defined(__APPLE__) || defined(__unix__)
     int fd = open("/dev/urandom", O_RDONLY);
     if (fd < 0)

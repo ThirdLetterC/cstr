@@ -71,6 +71,53 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
 
+  freebsd:
+    name: FreeBSD 14.1 / GCC and Clang
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Run tests inside FreeBSD VM
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "14.1"
+          usesh: true
+          run: |
+            set -eu
+            uname -a
+            pkg install -y gmake gcc cmake
+            gcc --version
+            gmake test CC=gcc
+            cc --version
+            cmake -S . -B build/freebsd -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cc
+            cmake --build build/freebsd --parallel 2
+            ctest --test-dir build/freebsd --output-on-failure
+
+  openbsd:
+    name: OpenBSD 7.9 / Clang
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Run tests inside OpenBSD VM
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: "7.9"
+          usesh: true
+          run: |
+            set -eu
+            uname -a
+            pkg_add gmake cmake
+            cc --version
+            gmake test CC=cc
+            cmake -S . -B build/openbsd -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cc
+            cmake --build build/openbsd --parallel 2
+            ctest --test-dir build/openbsd --output-on-failure
+
   msvc:
     name: Windows / MSVC / ${{ matrix.config }} / shared=${{ matrix.shared }}
     runs-on: windows-2022

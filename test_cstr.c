@@ -27,7 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__linux__) || defined(__APPLE__) || defined(__unix__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__unix__) || defined(__FreeBSD__) || \
+    defined(__OpenBSD__)
 #include <sys/mman.h>
 #include <unistd.h>
 #define CS_HAVE_MMAP_GUARD 1
@@ -436,8 +437,25 @@ static void test_regex_glob_and_hashing(void) {
     cs_destroy(&rep);
 }
 
-static void test_windows_aligned_allocator(void) {
-#if defined(_WIN32) && !CS_NO_HEAP && !CS_USE_MIMALLOC
+static void test_os_services(void) {
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+    int cmp = 0;
+    TEST_ASSERT(cs_compare_collation(CS_LIT("abc"), CS_LIT("abd"), "C", &cmp) == CS_OK);
+    TEST_ASSERT(cmp < 0);
+    TEST_ASSERT(cs_compare_collation(CS_LIT("abc"), CS_LIT("abc"), "C", &cmp) == CS_OK);
+    TEST_ASSERT(cmp == 0);
+#endif
+#if defined(_WIN32) || defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || \
+    defined(__OpenBSD__)
+    uint8_t key[16];
+    TEST_ASSERT(cs_hash_seed_from_os(NULL) == CS_EINVAL);
+    TEST_ASSERT(cs_hash_seed_from_os(key) == CS_OK);
+#endif
+}
+
+static void test_platform_aligned_allocator(void) {
+#if (defined(_WIN32) || defined(__FreeBSD__) || defined(__OpenBSD__)) && !CS_NO_HEAP && \
+    !CS_USE_MIMALLOC
     cs_allocator a = cs_default_allocator();
     unsigned char *p = a.alloc(a.ctx, 64, 64);
     TEST_ASSERT(p != NULL);
@@ -613,7 +631,8 @@ int main(void) {
     test_utf8_and_utf16_32();
     test_search_split_format_codecs();
     test_regex_glob_and_hashing();
-    test_windows_aligned_allocator();
+    test_os_services();
+    test_platform_aligned_allocator();
     test_differential_backends_and_guard_page();
     test_unicode_17_conformance();
 
